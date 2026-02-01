@@ -24,7 +24,6 @@ services:
     ports:
       - "8080:80"
     volumes:
-      - ./web:/var/www/html
       - publix-data:/var/www/html/data
     depends_on:
       - python-backend

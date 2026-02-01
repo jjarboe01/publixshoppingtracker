@@ -9,6 +9,13 @@ RUN apt-get update && \
 # Enable Apache modules
 RUN a2enmod rewrite
 
+# Copy web files into the container
+COPY ./web /var/www/html/
+
+# Set proper ownership for web files
+RUN chown -R www-data:www-data /var/www/html && \
+    chmod -R 755 /var/www/html
+
 # Update Apache configuration to allow access
 RUN echo '<Directory /var/www/html/>\n\
     Options -Indexes +FollowSymLinks\n\
@@ -17,13 +24,9 @@ RUN echo '<Directory /var/www/html/>\n\
     DirectoryIndex index.php index.html\n\
 </Directory>' >> /etc/apache2/apache2.conf
 
-# Create entrypoint script to ensure data directory exists and has proper permissions
+# Create entrypoint script to ensure data directory has proper permissions at runtime
 RUN echo '#!/bin/bash\n\
 set -e\n\
-\n\
-# Set proper ownership for web files\n\
-chown -R www-data:www-data /var/www/html\n\
-chmod -R 755 /var/www/html\n\
 \n\
 # Create data directory if it does not exist\n\
 mkdir -p /var/www/html/data\n\
