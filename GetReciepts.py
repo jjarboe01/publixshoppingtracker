@@ -610,7 +610,20 @@ def main():
     # Note: For Gmail, you need to use an App Password, not your regular password
     # Create one at: https://myaccount.google.com/apppasswords
     email_address = "joseph.jarboe@gmail.com"
-    password = getpass("Enter your Gmail app password: ")
+    
+    # Try to load password from password.py if it exists
+    password = None
+    try:
+        import password as pwd_module
+        if hasattr(pwd_module, 'password'):
+            password = pwd_module.password
+            print("Loaded password from password.py")
+    except ImportError:
+        pass
+    
+    # If no password loaded, prompt user
+    if not password:
+        password = getpass("Enter your Gmail app password: ")
     
     # Connect to Gmail
     imap = connect_to_gmail(email_address, password)
