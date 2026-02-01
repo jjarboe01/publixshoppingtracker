@@ -9,11 +9,23 @@
 ### 1. Build and Start Containers
 ```bash
 cd /home/jjarboe/Projects/PublixTracker
+
+# Build containers (first time or after updates)
+docker-compose build
+
+# Start containers
 docker-compose up -d
+```
+
+**Or use the quick fix script:**
+```bash
+./fix-permissions.sh
 ```
 
 ### 2. Access the Web Interface
 Open your browser to: `http://localhost:8080`
+
+**If you see "Forbidden" error:** Run the fix-permissions.sh script or see the Troubleshooting section below.
 
 ### 3. Configure Gmail Credentials
 1. Click "⚙️ Settings" in the navigation menu
@@ -110,20 +122,54 @@ The SQLite database is stored in a Docker volume and shared between containers:
 
 ## Troubleshooting
 
+### "Forbidden - You don't have permission to access this resource"
+
+This is a permission issue. Fix it by rebuilding the containers:
+
+```bash
+# Stop and remove containers
+docker-compose down
+
+# Rebuild with the custom web Dockerfile
+docker-compose build --no-cache web
+
+# Start containers
+docker-compose up -d
+
+# Verify permissions
+docker-compose exec web ls -la /var/www/html/data/
+```
+
+If the issue persists, manually fix permissions:
+```bash
+docker-compose exec web chown -R www-data:www-data /var/www/html/data
+docker-compose exec web chmod -R 775 /var/www/html/data
+```
+
 ### Database not found
 Make sure the database file is in the shared volume:
 ```bash
 docker-compose exec python-backend ls -la /app/data/
 ```
 
-### Permission issues
+### Permission issues with database
 ```bash
-docker-compose exec python-backend chmod 666 /app/data/publix_tracker.db
+docker-compose exec web chown www-data:www-data /var/www/html/data/publix_tracker.db
+docker-compose exec web chmod 664 /var/www/html/data/publix_tracker.db
+```
+
+### Cannot write to config file
+Ensure the data directory has proper permissions:
+```bash
+docker-compose exec web mkdir -p /var/www/html/data
+docker-compose exec web chown -R www-data:www-data /var/www/html/data
+docker-compose exec web chmod -R 775 /var/www/html/data
 ```
 
 ### Reset everything
 ```bash
 docker-compose down -v  # Warning: This deletes all data
+docker-compose build --no-cache
 docker-compose up -d
 ```
 

@@ -5,6 +5,7 @@ services:
   python-backend:
     build: .
     container_name: publix-tracker-backend
+    restart: unless-stopped
     volumes:
       - ./:/app
       - publix-data:/app/data
@@ -15,8 +16,11 @@ services:
 
   # PHP Frontend with Apache
   web:
-    image: php:8.2-apache
+    build:
+      context: .
+      dockerfile: Dockerfile.web
     container_name: publix-tracker-web
+    restart: unless-stopped
     ports:
       - "8080:80"
     volumes:
@@ -24,14 +28,6 @@ services:
       - publix-data:/var/www/html/data
     depends_on:
       - python-backend
-    environment:
-      - APACHE_DOCUMENT_ROOT=/var/www/html
-    command: >
-      bash -c "apt-get update && 
-               apt-get install -y libsqlite3-dev && 
-               docker-php-ext-install pdo pdo_sqlite && 
-               chmod 777 /var/www/html/data && 
-               apache2-foreground"
 
 volumes:
   publix-data:

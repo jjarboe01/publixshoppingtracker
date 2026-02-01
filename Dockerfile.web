@@ -1,0 +1,41 @@
+FROM php:8.2-apache
+
+# Install SQLite extensions
+RUN apt-get update && \
+    apt-get install -y libsqlite3-dev && \
+    docker-php-ext-install pdo pdo_sqlite && \
+    rm -rf /var/lib/apt/lists/*
+
+# Enable Apache modules
+RUN a2enmod rewrite
+
+# Update Apache configuration to allow access
+RUN echo '<Directory /var/www/html/>\n\
+    Options Indexes FollowSymLinks\n\
+    AllowOverride All\n\
+    Require all granted\n\
+</Directory>' >> /etc/apache2/apache2.conf
+
+# Create entrypoint script to ensure data directory exists and has proper permissions
+RUN echo '#!/bin/bash\n\
+set -e\n\
+\n\
+# Create data directory if it does not exist\n\
+mkdir -p /var/www/html/data\n\
+\n\
+# Set proper ownership and permissions\n\
+chown -R www-data:www-data /var/www/html/data\n\
+chmod -R 775 /var/www/html/data\n\
+\n\
+# Ensure database file has proper permissions if it exists\n\
+if [ -f /var/www/html/data/publix_tracker.db ]; then\n\
+    chown www-data:www-data /var/www/html/data/publix_tracker.db\n\
+    chmod 664 /var/www/html/data/publix_tracker.db\n\
+fi\n\
+\n\
+# Start Apache\n\
+exec apache2-foreground' > /entrypoint.sh && \
+chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
+
