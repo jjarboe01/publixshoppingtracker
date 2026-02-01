@@ -21,10 +21,14 @@ RUN echo '<Directory /var/www/html/>\n\
 RUN echo '#!/bin/bash\n\
 set -e\n\
 \n\
+# Set proper ownership for web files\n\
+chown -R www-data:www-data /var/www/html\n\
+chmod -R 755 /var/www/html\n\
+\n\
 # Create data directory if it does not exist\n\
 mkdir -p /var/www/html/data\n\
 \n\
-# Set proper ownership and permissions\n\
+# Set proper ownership and permissions for data directory\n\
 chown -R www-data:www-data /var/www/html/data\n\
 chmod -R 775 /var/www/html/data\n\
 \n\
