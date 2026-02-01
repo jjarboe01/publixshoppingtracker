@@ -597,6 +597,36 @@ def parse_receipt_summary(email_body):
     return summary
 
 
+def load_credentials():
+    """
+    Load Gmail credentials from web config file or prompt user.
+    Priority:
+    1. Web config file (web/data/config.php) - Set via Settings page
+    2. Command-line prompt - Manual entry
+    """
+    # Try to load from web config file
+    web_config_file = os.path.join(os.path.dirname(__file__), 'web', 'data', 'config.php')
+    if os.path.exists(web_config_file):
+        try:
+            with open(web_config_file, 'r') as f:
+                content = f.read()
+                # Extract email and password from PHP defines
+                email_match = re.search(r"define\('GMAIL_EMAIL',\s*'([^']+)'\)", content)
+                password_match = re.search(r"define\('GMAIL_PASSWORD',\s*'([^']+)'\)", content)
+                if email_match and password_match:
+                    print("✓ Loaded credentials from web settings")
+                    return email_match.group(1), password_match.group(1)
+        except Exception as e:
+            print(f"Warning: Could not read web config: {e}")
+    
+    # Prompt user for credentials
+    print("No saved credentials found. Please configure credentials in the web Settings page,")
+    print("or enter them manually below.\n")
+    email_address = input("Enter your Gmail address: ")
+    password = getpass("Enter your Gmail app password: ")
+    return email_address, password
+
+
 def main():
     """
     Main function to retrieve Publix receipts from Gmail.
@@ -609,21 +639,8 @@ def main():
     # Get Gmail credentials
     # Note: For Gmail, you need to use an App Password, not your regular password
     # Create one at: https://myaccount.google.com/apppasswords
-    email_address = "joseph.jarboe@gmail.com"
-    
-    # Try to load password from password.py if it exists
-    password = None
-    try:
-        import password as pwd_module
-        if hasattr(pwd_module, 'password'):
-            password = pwd_module.password
-            print("Loaded password from password.py")
-    except ImportError:
-        pass
-    
-    # If no password loaded, prompt user
-    if not password:
-        password = getpass("Enter your Gmail app password: ")
+    email_address, password = load_credentials()
+    print(f"Using email: {email_address}\n")
     
     # Connect to Gmail
     imap = connect_to_gmail(email_address, password)

@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  # Python backend
+  python-backend:
+    build: .
+    container_name: publix-tracker-backend
+    volumes:
+      - ./:/app
+      - publix-data:/app/data
+    environment:
+      - GMAIL_USER=${GMAIL_USER}
+      - GMAIL_PASSWORD=${GMAIL_PASSWORD}
+    command: tail -f /dev/null  # Keep container running
+
+  # PHP Frontend with Apache
+  web:
+    image: php:8.2-apache
+    container_name: publix-tracker-web
+    ports:
+      - "8080:80"
+    volumes:
+      - ./web:/var/www/html
+      - publix-data:/var/www/html/data
+    depends_on:
+      - python-backend
+    environment:
+      - APACHE_DOCUMENT_ROOT=/var/www/html
+    command: >
+      bash -c "apt-get update && 
+               apt-get install -y libsqlite3-dev && 
+               docker-php-ext-install pdo pdo_sqlite && 
+               chmod 777 /var/www/html/data && 
+               apache2-foreground"
+
+volumes:
+  publix-data:
+    driver: local

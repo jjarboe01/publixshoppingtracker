@@ -1,0 +1,32 @@
+# Sensitive files
+web/data/config.php
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Database files (will be in volume)
+*.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Misc
+*.log
+.DS_Store
+receipts/
