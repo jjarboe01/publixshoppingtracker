@@ -610,7 +610,7 @@ def main():
     # Note: For Gmail, you need to use an App Password, not your regular password
     # Create one at: https://myaccount.google.com/apppasswords
     email_address = "joseph.jarboe@gmail.com"
-    password = "rfqz lhaj gzrh olcr"
+    password = getpass("Enter your Gmail app password: ")
     
     # Connect to Gmail
     imap = connect_to_gmail(email_address, password)
