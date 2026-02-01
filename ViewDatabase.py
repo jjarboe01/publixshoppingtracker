@@ -357,6 +357,8 @@ def top_items(conn, limit=20):
     cursor.execute('''
         SELECT item_name, COUNT(*) as purchase_count, SUM(price) as total_spent,
                AVG(price) as avg_price,
+               MIN(price) as min_price,
+               MAX(price) as max_price,
                SUM(CASE WHEN on_sale = 1 THEN 1 ELSE 0 END) as sale_count
         FROM purchases
         GROUP BY item_name
@@ -370,19 +372,19 @@ def top_items(conn, limit=20):
         print("\nNo items found in database")
         return
     
-    print(f"\n{'='*80}")
+    print(f"\n{'='*100}")
     print(f"🏆 Top {limit} Most Purchased Items")
-    print(f"{'='*80}\n")
-    print(f"{'Item':<40} {'Count':<8} {'Total':<12} {'Avg':<12} {'Sale'}")
-    print(f"{'-'*80}")
+    print(f"{'='*100}\n")
+    print(f"{'Item':<40} {'Count':<8} {'Total':<10} {'Avg':<10} {'Low':<10} {'High':<10} {'Sale'}")
+    print(f"{'-'*100}")
     
-    for item_name, count, total, avg, sale_count in items:
+    for item_name, count, total, avg, min_price, max_price, sale_count in items:
         sale_pct = (sale_count / count * 100) if count > 0 else 0
         sale_indicator = f"{sale_count} ({sale_pct:.0f}%)" if sale_count > 0 else ""
         
-        print(f"{item_name:<40} {count:<8} ${total:<11.2f} ${avg:<11.2f} {sale_indicator}")
+        print(f"{item_name:<40} {count:<8} ${total:<9.2f} ${avg:<9.2f} ${min_price:<9.2f} ${max_price:<9.2f} {sale_indicator}")
     
-    print(f"{'='*80}\n")
+    print(f"{'='*100}\n")
 
 
 def interactive_menu():
