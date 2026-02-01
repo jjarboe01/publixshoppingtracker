@@ -1,12 +1,15 @@
-# Enable directory listing for debugging (remove in production)
-Options +Indexes
+# Disable directory listing
+Options -Indexes
+
+# Set default index files
+DirectoryIndex index.php index.html
 
 # Set default character set
 AddDefaultCharset UTF-8
 
-# Allow access to PHP files
+# Enable PHP processing
 <FilesMatch "\.php$">
-    Require all granted
+    SetHandler application/x-httpd-php
 </FilesMatch>
 
 # Protect sensitive files
@@ -14,7 +17,7 @@ AddDefaultCharset UTF-8
     Require all denied
 </FilesMatch>
 
-# Prevent directory listing of data folder
+# Protect data directory from direct browsing
 <Directory "data">
     Options -Indexes
     Require all granted

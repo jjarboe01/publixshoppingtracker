@@ -11,9 +11,10 @@ RUN a2enmod rewrite
 
 # Update Apache configuration to allow access
 RUN echo '<Directory /var/www/html/>\n\
-    Options Indexes FollowSymLinks\n\
+    Options -Indexes +FollowSymLinks\n\
     AllowOverride All\n\
     Require all granted\n\
+    DirectoryIndex index.php index.html\n\
 </Directory>' >> /etc/apache2/apache2.conf
 
 # Create entrypoint script to ensure data directory exists and has proper permissions
