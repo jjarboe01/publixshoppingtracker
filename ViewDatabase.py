@@ -355,13 +355,21 @@ def top_items(conn, limit=20):
     cursor = conn.cursor()
     
     cursor.execute('''
-        SELECT item_name, COUNT(*) as purchase_count, SUM(price) as total_spent,
-               AVG(price) as avg_price,
-               MIN(price) as min_price,
-               MAX(price) as max_price,
-               SUM(CASE WHEN on_sale = 1 THEN 1 ELSE 0 END) as sale_count
-        FROM purchases
-        GROUP BY item_name
+        SELECT 
+            p.item_name, 
+            COUNT(*) as purchase_count, 
+            SUM(p.price) as total_spent,
+            AVG(p.price) as avg_price,
+            MIN(p.price) as min_price,
+            MAX(p.price) as max_price,
+            (SELECT price FROM purchases 
+             WHERE item_name = p.item_name 
+             ORDER BY purchase_date DESC, created_at DESC LIMIT 1) as last_price,
+            (SELECT purchase_date FROM purchases 
+             WHERE item_name = p.item_name 
+             ORDER BY purchase_date DESC, created_at DESC LIMIT 1) as last_date
+        FROM purchases p
+        GROUP BY p.item_name
         ORDER BY purchase_count DESC
         LIMIT ?
     ''', (limit,))
@@ -372,19 +380,16 @@ def top_items(conn, limit=20):
         print("\nNo items found in database")
         return
     
-    print(f"\n{'='*100}")
+    print(f"\n{'='*115}")
     print(f"🏆 Top {limit} Most Purchased Items")
-    print(f"{'='*100}\n")
-    print(f"{'Item':<40} {'Count':<8} {'Total':<10} {'Avg':<10} {'Low':<10} {'High':<10} {'Sale'}")
-    print(f"{'-'*100}")
+    print(f"{'='*115}\n")
+    print(f"{'Item':<40} {'Count':<8} {'Total':<10} {'Avg':<10} {'Low':<10} {'High':<10} {'Last Price':<12} {'Last Date':<12}")
+    print(f"{'-'*115}")
     
-    for item_name, count, total, avg, min_price, max_price, sale_count in items:
-        sale_pct = (sale_count / count * 100) if count > 0 else 0
-        sale_indicator = f"{sale_count} ({sale_pct:.0f}%)" if sale_count > 0 else ""
-        
-        print(f"{item_name:<40} {count:<8} ${total:<9.2f} ${avg:<9.2f} ${min_price:<9.2f} ${max_price:<9.2f} {sale_indicator}")
+    for item_name, count, total, avg, min_price, max_price, last_price, last_date in items:
+        print(f"{item_name:<40} {count:<8} ${total:<9.2f} ${avg:<9.2f} ${min_price:<9.2f} ${max_price:<9.2f} ${last_price:<11.2f} {last_date:<12}")
     
-    print(f"{'='*100}\n")
+    print(f"{'='*115}\n")
 
 
 def interactive_menu():
