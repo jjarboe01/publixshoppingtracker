@@ -1,9 +1,12 @@
 FROM php:8.2-apache
 
-# Install SQLite extensions
+# Install SQLite extensions and Docker CLI
 RUN apt-get update && \
-    apt-get install -y libsqlite3-dev && \
+    apt-get install -y libsqlite3-dev curl && \
     docker-php-ext-install pdo pdo_sqlite && \
+    curl -fsSL https://get.docker.com -o get-docker.sh && \
+    sh get-docker.sh && \
+    rm get-docker.sh && \
     rm -rf /var/lib/apt/lists/*
 
 # Enable Apache modules
