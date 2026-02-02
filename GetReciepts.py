@@ -343,6 +343,7 @@ def init_database(db_path="publix_tracker.db"):
             on_sale BOOLEAN NOT NULL,
             taxable BOOLEAN,
             email_id TEXT,
+            savings REAL DEFAULT 0.0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
@@ -379,7 +380,7 @@ def is_receipt_processed(conn, email_id):
     return count > 0
 
 
-def insert_purchase(conn, purchase_date, item_name, price, on_sale, taxable=None, email_id=None):
+def insert_purchase(conn, purchase_date, item_name, price, on_sale, taxable=None, email_id=None, savings=0.0):
     """
     Insert a purchase record into the database.
     
@@ -391,6 +392,7 @@ def insert_purchase(conn, purchase_date, item_name, price, on_sale, taxable=None
         on_sale: Boolean indicating if item was on sale
         taxable: Boolean indicating if item is taxable (optional)
         email_id: Email ID for reference (optional)
+        savings: Total savings amount for this receipt (optional)
     """
     cursor = conn.cursor()
     
@@ -399,9 +401,9 @@ def insert_purchase(conn, purchase_date, item_name, price, on_sale, taxable=None
         purchase_date = purchase_date.strftime('%Y-%m-%d')
     
     cursor.execute('''
-        INSERT INTO purchases (purchase_date, item_name, price, on_sale, taxable, email_id)
-        VALUES (?, ?, ?, ?, ?, ?)
-    ''', (purchase_date, item_name, price, on_sale, taxable, email_id))
+        INSERT INTO purchases (purchase_date, item_name, price, on_sale, taxable, email_id, savings)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    ''', (purchase_date, item_name, price, on_sale, taxable, email_id, savings))
     
     conn.commit()
 
@@ -705,6 +707,9 @@ def main():
                 # Fallback to current date if parsing fails
                 purchase_date_str = datetime.now().strftime('%Y-%m-%d')
             
+            # Get savings amount (default to 0.0 if not found)
+            receipt_savings = summary.get('savings', 0.0) or 0.0
+            
             for item in items:
                 tax_status = "🟢 Taxable" if item['taxable'] else "🔵 Non-Taxable" if item['taxable'] is False else "❓ Unknown"
                 sale_status = "💰 ON SALE" if item['on_sale'] else ""
@@ -714,7 +719,7 @@ def main():
                 
                 print(f"  • {item['item_name']:<40} ${item['price']:>6.2f}  {tax_status}  {sale_status}")
                 
-                # Insert into database
+                # Insert into database with savings
                 insert_purchase(
                     conn=imap_conn,
                     purchase_date=purchase_date_str,
@@ -722,7 +727,8 @@ def main():
                     price=db_price,
                     on_sale=item['on_sale'],
                     taxable=item['taxable'],
-                    email_id=email_info['id']
+                    email_id=email_info['id'],
+                    savings=receipt_savings
                 )
             
             print("\n" + "=" * 70)

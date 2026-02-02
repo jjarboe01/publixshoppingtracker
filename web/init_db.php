@@ -26,6 +26,7 @@ try {
             on_sale BOOLEAN NOT NULL,
             taxable BOOLEAN,
             email_id TEXT,
+            savings REAL DEFAULT 0.0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ');
