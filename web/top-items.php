@@ -13,11 +13,12 @@
     <div class="container">
         <header>
             <h1>🏆 Top Purchased Items</h1>
+            <p class="subtitle">Your most frequently purchased items</p>
         </header>
         
         <nav>
             <div class="nav-buttons">
-                <a href="index.php" class="btn btn-secondary">← Back to Dashboard</a>
+                <a href="index.php" class="btn btn-primary">📊 Dashboard</a>
                 <a href="monthly.php" class="btn btn-primary">📅 Monthly View</a>
                 <a href="sync.php" class="btn btn-warning">🔄 Sync Receipts</a>
                 <a href="settings.php" class="btn btn-secondary">⚙️ Settings</a>
@@ -39,49 +40,40 @@
                 $query = "SELECT 
                             p.item_name, 
                             COUNT(*) as purchase_count, 
-                            SUM(p.price) as total_spent,
                             AVG(p.price) as avg_price,
-                            MIN(p.price) as min_price,
-                            MAX(p.price) as max_price,
                             (SELECT price FROM purchases 
                              WHERE item_name = p.item_name 
-                             ORDER BY purchase_date DESC, created_at DESC LIMIT 1) as last_price,
-                            (SELECT purchase_date FROM purchases 
-                             WHERE item_name = p.item_name 
-                             ORDER BY purchase_date DESC, created_at DESC LIMIT 1) as last_date
+                             ORDER BY purchase_date DESC, created_at DESC LIMIT 1) as last_price
                           FROM purchases p
+                          WHERE on_sale = 0
                           GROUP BY p.item_name
                           ORDER BY purchase_count DESC
-                          LIMIT 50";
+                          LIMIT 25";
                 
                 $result = $db->query($query);
             ?>
             
+            <h2>Top 25 Most Purchased Items</h2>
             <table>
                 <thead>
                     <tr>
+                        <th>Rank</th>
                         <th>Item</th>
-                        <th>Count</th>
-                        <th>Total</th>
-                        <th>Avg</th>
-                        <th>Low</th>
-                        <th>High</th>
+                        <th>Times Purchased</th>
+                        <th>Average Price</th>
                         <th>Last Price</th>
-                        <th>Last Date</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php
+                    $rank = 1;
                     while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
                         echo "<tr>";
+                        echo "<td><strong>#" . $rank++ . "</strong></td>";
                         echo "<td><strong>" . htmlspecialchars($row['item_name']) . "</strong></td>";
-                        echo "<td>" . $row['purchase_count'] . "</td>";
-                        echo "<td class='price'>$" . number_format($row['total_spent'], 2) . "</td>";
+                        echo "<td>" . $row['purchase_count'] . "x</td>";
                         echo "<td class='price'>$" . number_format($row['avg_price'], 2) . "</td>";
-                        echo "<td class='price'>$" . number_format($row['min_price'], 2) . "</td>";
-                        echo "<td class='price'>$" . number_format($row['max_price'], 2) . "</td>";
                         echo "<td class='price'>$" . number_format($row['last_price'], 2) . "</td>";
-                        echo "<td class='date'>" . htmlspecialchars($row['last_date']) . "</td>";
                         echo "</tr>";
                     }
                     ?>
