@@ -436,6 +436,7 @@ def parse_receipt_items(email_body):
     
     # Track items and their promotions
     current_items = []
+    skip_next_negative = False  # Flag to skip next line if it's negative (for voided items)
     
     for i, line in enumerate(lines):
         # Skip empty lines
@@ -468,6 +469,21 @@ def parse_receipt_items(email_body):
             item_name = item_match.group(1).strip()
             price = float(item_match.group(2))
             tax_indicator = item_match.group(3).strip()
+            
+            # If we should skip negative values (after Voided Item)
+            if skip_next_negative and price < 0:
+                skip_next_negative = False
+                continue
+            skip_next_negative = False
+            
+            # Handle "Voided Item" lines - remove the previous item
+            if 'Voided Item' in item_name:
+                if current_items:
+                    removed_item = current_items.pop()
+                    print(f"  ⚠️  Voided: {removed_item['item_name']}")
+                # Set flag to skip next line if it has a negative value
+                skip_next_negative = True
+                continue
             
             # Skip if this looks like a quantity pricing line (e.g., "1 @   2 FOR      6.00")
             if re.match(r'^\d+\s+@', item_name):
