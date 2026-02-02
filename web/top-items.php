@@ -32,6 +32,13 @@
                 require_once('init_db.php');
             }
             
+            // Get limit from query parameter, default to 10
+            $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 10;
+            // Validate limit is one of the allowed values
+            if (!in_array($limit, [10, 15, 20, 25])) {
+                $limit = 10;
+            }
+            
             try {
                 $db = new SQLite3($db_file);
                 
@@ -48,12 +55,25 @@
                           WHERE on_sale = 0
                           GROUP BY p.item_name
                           ORDER BY purchase_count DESC
-                          LIMIT 25";
+                          LIMIT " . $limit;
                 
                 $result = $db->query($query);
             ?>
             
-            <h2>Top 25 Most Purchased Items</h2>
+            <!-- Item Count Selector -->
+            <div style="margin-bottom: 20px; text-align: center;">
+                <form method="GET" style="display: inline-block;">
+                    <label for="limit" style="font-size: 1.1em; font-weight: 600; margin-right: 10px;">Show Top:</label>
+                    <select name="limit" id="limit" onchange="this.form.submit()" style="padding: 8px 15px; font-size: 1em; border: 2px solid #00753e; border-radius: 8px; background: white; cursor: pointer;">
+                        <option value="10" <?php echo $limit == 10 ? 'selected' : ''; ?>>10 Items</option>
+                        <option value="15" <?php echo $limit == 15 ? 'selected' : ''; ?>>15 Items</option>
+                        <option value="20" <?php echo $limit == 20 ? 'selected' : ''; ?>>20 Items</option>
+                        <option value="25" <?php echo $limit == 25 ? 'selected' : ''; ?>>25 Items</option>
+                    </select>
+                </form>
+            </div>
+            
+            <h2>Top <?php echo $limit; ?> Most Purchased Items</h2>
             <table>
                 <thead>
                     <tr>
