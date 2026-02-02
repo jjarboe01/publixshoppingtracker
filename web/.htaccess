@@ -16,9 +16,3 @@ AddDefaultCharset UTF-8
 <FilesMatch "^\.">
     Require all denied
 </FilesMatch>
-
-# Protect data directory from direct browsing
-<Directory "data">
-    Options -Indexes
-    Require all granted
-</Directory>

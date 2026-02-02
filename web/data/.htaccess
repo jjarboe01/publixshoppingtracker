@@ -1,0 +1,7 @@
+# Prevent directory browsing
+Options -Indexes
+
+# Deny access to database files
+<FilesMatch "\.db$">
+    Require all denied
+</FilesMatch>
