@@ -38,6 +38,8 @@
                             p.item_name, 
                             COUNT(*) as purchase_count, 
                             AVG(p.price) as avg_price,
+                            MIN(p.price) as min_price,
+                            MAX(p.price) as max_price,
                             (SELECT price FROM purchases 
                              WHERE item_name = p.item_name 
                              ORDER BY purchase_date DESC, created_at DESC LIMIT 1) as last_price
@@ -56,9 +58,11 @@
                     <tr>
                         <th>Rank</th>
                         <th>Item</th>
-                        <th>Times Purchased</th>
-                        <th>Average Price</th>
-                        <th>Last Price</th>
+                        <th>Purchased</th>
+                        <th>Low</th>
+                        <th>Average</th>
+                        <th>High</th>
+                        <th>Last</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -69,7 +73,9 @@
                         echo "<td><strong>#" . $rank++ . "</strong></td>";
                         echo "<td><strong>" . htmlspecialchars($row['item_name']) . "</strong></td>";
                         echo "<td>" . $row['purchase_count'] . "x</td>";
+                        echo "<td class='price'>$" . number_format($row['min_price'], 2) . "</td>";
                         echo "<td class='price'>$" . number_format($row['avg_price'], 2) . "</td>";
+                        echo "<td class='price'>$" . number_format($row['max_price'], 2) . "</td>";
                         echo "<td class='price'>$" . number_format($row['last_price'], 2) . "</td>";
                         echo "</tr>";
                     }
