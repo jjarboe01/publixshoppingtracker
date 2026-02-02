@@ -9,6 +9,9 @@ RUN apt-get update && \
     rm get-docker.sh && \
     rm -rf /var/lib/apt/lists/*
 
+# Add www-data to docker group
+RUN usermod -aG docker www-data
+
 # Enable Apache modules
 RUN a2enmod rewrite
 
@@ -42,6 +45,12 @@ chmod -R 775 /var/www/html/data\n\
 if [ -f /var/www/html/data/publix_tracker.db ]; then\n\
     chown www-data:www-data /var/www/html/data/publix_tracker.db\n\
     chmod 664 /var/www/html/data/publix_tracker.db\n\
+fi\n\
+\n\
+# Fix docker socket permissions\n\
+if [ -S /var/run/docker.sock ]; then\n\
+    DOCKER_SOCK_GID=$(stat -c "%g" /var/run/docker.sock)\n\
+    groupmod -g $DOCKER_SOCK_GID docker 2>/dev/null || true\n\
 fi\n\
 \n\
 # Start Apache\n\
