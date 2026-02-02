@@ -8,6 +8,7 @@ RUN apt-get update && \
     python3-pip \
     python3-venv \
     gcc \
+    cron \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
@@ -41,6 +42,11 @@ RUN chown -R www-data:www-data /var/www/html /app/data && \
 RUN rm -rf /var/www/html/data && \
     ln -s /app/data /var/www/html/data
 
+# Set up cron job to run GetReciepts.py daily at 5am
+RUN echo "0 5 * * * cd /app && python3 GetReciepts.py >> /app/data/cron.log 2>&1" > /etc/cron.d/publix-sync && \
+    chmod 0644 /etc/cron.d/publix-sync && \
+    crontab /etc/cron.d/publix-sync
+
 # Update Apache configuration
 RUN echo '<Directory /var/www/html/>\n\
     Options -Indexes +FollowSymLinks\n\
@@ -63,6 +69,9 @@ if [ -f /app/data/publix_tracker.db ]; then\n\
     chown www-data:www-data /app/data/publix_tracker.db\n\
     chmod 664 /app/data/publix_tracker.db\n\
 fi\n\
+\n\
+# Start cron service\n\
+service cron start\n\
 \n\
 # Start Apache\n\
 exec apache2-foreground' > /entrypoint.sh && \
