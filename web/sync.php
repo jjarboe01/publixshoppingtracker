@@ -57,7 +57,9 @@
                     while (!feof($handle)) {
                         echo htmlspecialchars(fgets($handle));
                         flush();
-                        ob_flush();
+                        if (ob_get_level() > 0) {
+                            ob_flush();
+                        }
                     }
                     pclose($handle);
                     
