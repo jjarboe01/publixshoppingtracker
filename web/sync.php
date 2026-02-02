@@ -44,8 +44,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo '<pre id="output" style="background: #fff; padding: 15px; border-radius: 5px; overflow-x: auto; max-height: 500px; overflow-y: auto; border: 1px solid #ddd;">';
         flush();
         
-        // Execute Python script - it will automatically use web config if available
-        $command = 'docker exec publix-tracker-backend python3 GetReciepts.py 2>&1';
+        // Execute Python script directly - it will automatically use web config if available
+        $command = 'cd /app && python3 GetReciepts.py 2>&1';
         
         $handle = popen($command, 'r');
         if ($handle) {
@@ -133,12 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </p>
                 </div>
                 <?php endif; ?>
-                </form>
             </div>
-            
-            <?php
-            }
-            ?>
         </div>
     </div>
     

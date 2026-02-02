@@ -1,33 +1,21 @@
 version: '3.8'
 
 services:
-  # Python backend
-  python-backend:
-    build: .
-    container_name: publix-tracker-backend
+  # Unified container with Apache/PHP and Python
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.unified
+    container_name: publix-tracker
     restart: unless-stopped
+    ports:
+      - "8080:80"
     volumes:
       - ./:/app
       - publix-data:/app/data
     environment:
       - GMAIL_USER=${GMAIL_USER}
       - GMAIL_PASSWORD=${GMAIL_PASSWORD}
-    command: tail -f /dev/null  # Keep container running
-
-  # PHP Frontend with Apache
-  web:
-    build:
-      context: .
-      dockerfile: Dockerfile.web
-    container_name: publix-tracker-web
-    restart: unless-stopped
-    ports:
-      - "8080:80"
-    volumes:
-      - publix-data:/var/www/html/data
-      - /var/run/docker.sock:/var/run/docker.sock
-    depends_on:
-      - python-backend
 
 volumes:
   publix-data:
