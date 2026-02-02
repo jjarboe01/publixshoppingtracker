@@ -601,23 +601,30 @@ def load_credentials():
     """
     Load Gmail credentials from web config file or prompt user.
     Priority:
-    1. Web config file (web/data/config.php) - Set via Settings page
+    1. Web config file (data/config.php) - Set via Settings page
     2. Command-line prompt - Manual entry
     """
-    # Try to load from web config file
-    web_config_file = os.path.join(os.path.dirname(__file__), 'web', 'data', 'config.php')
-    if os.path.exists(web_config_file):
-        try:
-            with open(web_config_file, 'r') as f:
-                content = f.read()
-                # Extract email and password from PHP defines
-                email_match = re.search(r"define\('GMAIL_EMAIL',\s*'([^']+)'\)", content)
-                password_match = re.search(r"define\('GMAIL_PASSWORD',\s*'([^']+)'\)", content)
-                if email_match and password_match:
-                    print("✓ Loaded credentials from web settings")
-                    return email_match.group(1), password_match.group(1)
-        except Exception as e:
-            print(f"Warning: Could not read web config: {e}")
+    # Try to load from web config file (shared data volume)
+    # Check multiple possible locations
+    config_paths = [
+        '/app/data/config.php',  # Docker volume mount
+        os.path.join(os.path.dirname(__file__), 'data', 'config.php'),  # Local data dir
+        os.path.join(os.path.dirname(__file__), 'web', 'data', 'config.php')  # Web data dir
+    ]
+    
+    for web_config_file in config_paths:
+        if os.path.exists(web_config_file):
+            try:
+                with open(web_config_file, 'r') as f:
+                    content = f.read()
+                    # Extract email and password from PHP defines
+                    email_match = re.search(r"define\('GMAIL_EMAIL',\s*'([^']+)'\)", content)
+                    password_match = re.search(r"define\('GMAIL_PASSWORD',\s*'([^']+)'\)", content)
+                    if email_match and password_match:
+                        print(f"✓ Loaded credentials from {web_config_file}")
+                        return email_match.group(1), password_match.group(1)
+            except Exception as e:
+                print(f"Warning: Could not read config from {web_config_file}: {e}")
     
     # Prompt user for credentials
     print("No saved credentials found. Please configure credentials in the web Settings page,")

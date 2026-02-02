@@ -1,3 +1,86 @@
+<?php
+// Check if credentials are saved in config
+$config_file = './data/config.php';
+$has_saved_credentials = false;
+$saved_email = '';
+
+if (file_exists($config_file)) {
+    include $config_file;
+    if (defined('GMAIL_EMAIL') && defined('GMAIL_PASSWORD')) {
+        $has_saved_credentials = true;
+        $saved_email = GMAIL_EMAIL;
+    }
+}
+
+// Handle POST request before any HTML output
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Check if using saved credentials or manual entry
+    $use_saved = isset($_POST['use_saved']) && $_POST['use_saved'] === '1';
+    
+    if ($use_saved && $has_saved_credentials) {
+        $email = constant('GMAIL_EMAIL');
+        $password = constant('GMAIL_PASSWORD');
+    } else {
+        $email = $_POST['email'] ?? '';
+        $password = $_POST['password'] ?? '';
+    }
+    
+    if ($email && $password) {
+        // Disable output buffering for streaming
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+        
+        // Disable Apache output buffering
+        header('Content-Type: text/html; charset=UTF-8');
+        header('X-Accel-Buffering: no');
+        header('Cache-Control: no-cache');
+        
+        // Output minimal HTML for streaming output
+        echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Syncing...</title></head><body>';
+        echo '<div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px; font-family: Arial, sans-serif;">';
+        echo '<h2>Syncing receipts...</h2>';
+        echo '<p><a href="sync.php" style="color: #00753e;">← Back</a> | <a href="index.php" style="color: #00753e;">Dashboard</a></p>';
+        echo '<pre id="output" style="background: #fff; padding: 15px; border-radius: 5px; overflow-x: auto; max-height: 500px; overflow-y: auto; border: 1px solid #ddd;">';
+        flush();
+        
+        // Execute Python script - it will automatically use web config if available
+        $command = 'docker exec publix-tracker-backend python3 GetReciepts.py 2>&1';
+        
+        $handle = popen($command, 'r');
+        if ($handle) {
+            while (!feof($handle)) {
+                $line = fgets($handle);
+                if ($line !== false) {
+                    echo htmlspecialchars($line);
+                    flush();
+                }
+            }
+            $exit_code = pclose($handle);
+            
+            if ($exit_code !== 0) {
+                echo "\n\n[Error: Script exited with code $exit_code]\n";
+            }
+        } else {
+            echo "[Error: Failed to execute command]\n";
+        }
+        
+        echo '</pre>';
+        echo '<p style="margin-top: 20px;"><a href="index.php" style="background: #00753e; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">View Updated Dashboard</a></p>';
+        echo '</div>';
+        
+        echo '<script>';
+        echo 'var output = document.getElementById("output");';
+        echo 'if(output) output.scrollTop = output.scrollHeight;';
+        echo '</script>';
+        echo '</body></html>';
+        exit;
+    } else {
+        // Will show error in the main form below
+        $error_message = 'Please provide both email and password.';
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -20,78 +103,11 @@
         
         <div class="content">
             <?php
-            // Check if credentials are saved in config
-            $config_file = './data/config.php';
-            $has_saved_credentials = false;
-            $saved_email = '';
-            
-            if (file_exists($config_file)) {
-                include $config_file;
-                if (defined('GMAIL_EMAIL') && defined('GMAIL_PASSWORD')) {
-                    $has_saved_credentials = true;
-                    $saved_email = GMAIL_EMAIL;
-                }
+            if (isset($error_message)) {
+                echo '<div style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 8px; margin: 20px 0;">';
+                echo '<strong>Error:</strong> ' . htmlspecialchars($error_message);
+                echo '</div>';
             }
-            
-            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                // Check if using saved credentials or manual entry
-                $use_saved = isset($_POST['use_saved']) && $_POST['use_saved'] === '1';
-                
-                if ($use_saved && $has_saved_credentials) {
-                    $email = constant('GMAIL_EMAIL');
-                    $password = constant('GMAIL_PASSWORD');
-                } else {
-                    $email = $_POST['email'] ?? '';
-                    $password = $_POST['password'] ?? '';
-                }
-                
-                if ($email && $password) {
-                    // Disable output buffering for streaming
-                    if (ob_get_level()) ob_end_clean();
-                    
-                    // Disable Apache output buffering
-                    header('X-Accel-Buffering: no');
-                    
-                    echo '<div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">';
-                    echo '<h3>Syncing receipts...</h3>';
-                    echo '<pre id="output" style="background: #fff; padding: 15px; border-radius: 5px; overflow-x: auto; max-height: 500px; overflow-y: auto;">';
-                    flush();
-                    
-                    // Execute Python script - it will automatically use web config if available
-                    $command = 'docker exec publix-tracker-backend python3 GetReciepts.py 2>&1';
-                    
-                    $handle = popen($command, 'r');
-                    if ($handle) {
-                        while (!feof($handle)) {
-                            $line = fgets($handle);
-                            if ($line !== false) {
-                                echo htmlspecialchars($line);
-                                flush();
-                            }
-                        }
-                        $exit_code = pclose($handle);
-                        
-                        if ($exit_code !== 0) {
-                            echo "\n\n[Error: Script exited with code $exit_code]\n";
-                        }
-                    } else {
-                        echo "[Error: Failed to execute command]\n";
-                    }
-                    
-                    echo '</pre>';
-                    echo '<p><a href="index.php" class="btn btn-primary">View Updated Dashboard</a></p>';
-                    echo '</div>';
-                    
-                    echo '<script>';
-                    echo 'var output = document.getElementById("output");';
-                    echo 'output.scrollTop = output.scrollHeight;';
-                    echo '</script>';
-                } else {
-                    echo '<div style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 8px; margin: 20px 0;">';
-                    echo '<strong>Error:</strong> Please provide both email and password.';
-                    echo '</div>';
-                }
-            } else {
             ?>
             
             <div style="max-width: 600px; margin: 40px auto;">

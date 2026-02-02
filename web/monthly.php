@@ -269,6 +269,11 @@
             // Database connection
             $db_file = './data/publix_tracker.db';
             
+            // Initialize database if it doesn't exist
+            if (!file_exists($db_file)) {
+                require_once('init_db.php');
+            }
+            
             try {
                 $db = new SQLite3($db_file);
                 
