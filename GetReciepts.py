@@ -640,8 +640,9 @@ def main():
     """
     print("=== Publix Receipt Retriever ===\n")
     
-    # Initialize database
-    db_conn = init_database()
+    # Initialize database - use data directory path
+    db_path = "/app/data/publix_tracker.db"
+    db_conn = init_database(db_path)
     
     # Get Gmail credentials
     # Note: For Gmail, you need to use an App Password, not your regular password
