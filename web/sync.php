@@ -46,26 +46,46 @@
                 }
                 
                 if ($email && $password) {
-                    // Execute Python script - it will automatically use web config if available
-                    $command = 'cd /app && python3 GetReciepts.py 2>&1';
+                    // Disable output buffering for streaming
+                    if (ob_get_level()) ob_end_clean();
+                    
+                    // Disable Apache output buffering
+                    header('X-Accel-Buffering: no');
                     
                     echo '<div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">';
                     echo '<h3>Syncing receipts...</h3>';
-                    echo '<pre style="background: #fff; padding: 15px; border-radius: 5px; overflow-x: auto; max-height: 500px; overflow-y: auto;">';
+                    echo '<pre id="output" style="background: #fff; padding: 15px; border-radius: 5px; overflow-x: auto; max-height: 500px; overflow-y: auto;">';
+                    flush();
+                    
+                    // Execute Python script - it will automatically use web config if available
+                    $command = 'docker exec publix-tracker-backend python3 GetReciepts.py 2>&1';
                     
                     $handle = popen($command, 'r');
-                    while (!feof($handle)) {
-                        echo htmlspecialchars(fgets($handle));
-                        flush();
-                        if (ob_get_level() > 0) {
-                            ob_flush();
+                    if ($handle) {
+                        while (!feof($handle)) {
+                            $line = fgets($handle);
+                            if ($line !== false) {
+                                echo htmlspecialchars($line);
+                                flush();
+                            }
                         }
+                        $exit_code = pclose($handle);
+                        
+                        if ($exit_code !== 0) {
+                            echo "\n\n[Error: Script exited with code $exit_code]\n";
+                        }
+                    } else {
+                        echo "[Error: Failed to execute command]\n";
                     }
-                    pclose($handle);
                     
                     echo '</pre>';
                     echo '<p><a href="index.php" class="btn btn-primary">View Updated Dashboard</a></p>';
                     echo '</div>';
+                    
+                    echo '<script>';
+                    echo 'var output = document.getElementById("output");';
+                    echo 'output.scrollTop = output.scrollHeight;';
+                    echo '</script>';
                 } else {
                     echo '<div style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 8px; margin: 20px 0;">';
                     echo '<strong>Error:</strong> Please provide both email and password.';

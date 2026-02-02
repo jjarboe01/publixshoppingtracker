@@ -192,7 +192,6 @@
                 <a href="index.php" class="btn btn-primary">📊 Dashboard</a>
                 <a href="top-items.php" class="btn btn-primary">🏆 Top Items</a>
                 <a href="monthly.php" class="btn btn-primary">📅 Monthly View</a>
-                <a href="search.php" class="btn btn-secondary">🔍 Search</a>
                 <a href="sync.php" class="btn btn-warning">🔄 Sync Receipts</a>
                 <a href="settings.php" class="btn btn-secondary">⚙️ Settings</a>
             </div>
