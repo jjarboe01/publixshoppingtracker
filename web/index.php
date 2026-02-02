@@ -19,6 +19,7 @@
                 <a href="top-items.php" class="btn btn-primary">🏆 Top Items</a>
                 <a href="monthly.php" class="btn btn-primary">📅 Monthly View</a>
                 <a href="yearly.php" class="btn btn-primary">📆 Yearly View</a>
+                <a href="database.php" class="btn btn-secondary">🗄️ Database</a>
                 <a href="search.php" class="btn btn-secondary">🔍 Search</a>
                 <a href="sync.php" class="btn btn-warning">🔄 Sync Receipts</a>
                 <a href="settings.php" class="btn btn-secondary">⚙️ Settings</a>
@@ -36,6 +37,7 @@
                 // Get statistics
                 $total_items = $db->querySingle("SELECT COUNT(*) FROM purchases");
                 $total_spent = $db->querySingle("SELECT SUM(price) FROM purchases WHERE on_sale = 0");
+                $total_savings = $db->querySingle("SELECT SUM(savings) FROM purchases");
                 $unique_items = $db->querySingle("SELECT COUNT(DISTINCT item_name) FROM purchases");
                 $shopping_trips = $db->querySingle("SELECT COUNT(DISTINCT purchase_date) FROM purchases");
                 
@@ -55,6 +57,10 @@
                 <div class="stat-card">
                     <h3>Total Spent</h3>
                     <div class="value">$<?php echo number_format($total_spent, 2); ?></div>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Savings</h3>
+                    <div class="value" style="color: #00753e;">$<?php echo number_format($total_savings, 2); ?></div>
                 </div>
                 <div class="stat-card">
                     <h3>Unique Items</h3>

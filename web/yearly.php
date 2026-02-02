@@ -17,8 +17,7 @@
             <div class="nav-buttons">
                 <a href="index.php" class="btn btn-primary">📊 Dashboard</a>
                 <a href="top-items.php" class="btn btn-primary">🏆 Top Items</a>
-                <a href="monthly.php" class="btn btn-primary">📅 Monthly View</a>
-                <a href="sync.php" class="btn btn-warning">🔄 Sync Receipts</a>
+                <a href="monthly.php" class="btn btn-primary">📅 Monthly View</a>                <a href="database.php" class="btn btn-secondary">🗄️ Database</a>                <a href="sync.php" class="btn btn-warning">🔄 Sync Receipts</a>
                 <a href="settings.php" class="btn btn-secondary">⚙️ Settings</a>
             </div>
         </nav>
@@ -58,7 +57,7 @@
                     SELECT 
                         COUNT(*) as total_items,
                         SUM(CASE WHEN on_sale = 0 THEN price ELSE 0 END) as total_spent,
-                        SUM(CASE WHEN on_sale = 1 THEN price ELSE 0 END) as total_savings,
+                        SUM(savings) as total_savings,
                         COUNT(DISTINCT purchase_date) as total_trips,
                         COUNT(DISTINCT item_name) as unique_items
                     FROM purchases
@@ -149,7 +148,7 @@
                                 COUNT(DISTINCT purchase_date) as trip_count,
                                 COUNT(*) as item_count,
                                 SUM(CASE WHEN on_sale = 0 THEN price ELSE 0 END) as total_spent,
-                                SUM(CASE WHEN on_sale = 1 THEN price ELSE 0 END) as total_savings
+                                SUM(savings) as total_savings
                             FROM purchases
                             WHERE strftime('%Y', purchase_date) = ?
                             GROUP BY month

@@ -461,7 +461,8 @@ def parse_receipt_items(email_body):
         # Match item lines: "  ITEM NAME              PRICE   TAX"
         # Format: Item name (left-padded with 2 spaces), price (right-aligned), tax indicator
         # Example: "  CALIFIA UNSWT VAN             4.89   F"
-        item_match = re.match(r'^\s{2,}(.+?)\s+(\d+\.\d{2})\s+([TF](?:\s+[TF])?)\s*$', line)
+        # Also match negative prices for promotions: "  Promotion            -1.50   F"
+        item_match = re.match(r'^\s{2,}(.+?)\s+(-?\d+\.\d{2})\s+([TF](?:\s+[TF])?)\s*$', line)
         
         if item_match:
             item_name = item_match.group(1).strip()
@@ -476,14 +477,14 @@ def parse_receipt_items(email_body):
             if re.search(r'\d+\.?\d*\s*lb\s*@.*?/ lb', item_name, re.IGNORECASE):
                 continue
             
-            # Skip "You Saved" and "Promotion" lines
+            # Handle "Promotion" and "You Saved" lines
             if 'Promotion' in item_name or 'You Saved' in item_name:
-                # If this is a promotion (negative price), mark the previous item as on sale
-                if item_name.strip().startswith('Promotion') and price >= 0:
-                    # This is a discount line, mark last item as on sale
-                    if current_items:
-                        current_items[-1]['on_sale'] = True
-                        current_items[-1]['promotion_amount'] = price
+                if current_items:
+                    # Mark the previous item as on sale
+                    current_items[-1]['on_sale'] = True
+                    # Add the promotion amount as positive (convert negative to positive)
+                    # Add to existing promotion_amount in case there are multiple promotion lines
+                    current_items[-1]['promotion_amount'] += abs(price)
                 continue
             
             # Skip this line if next line is a quantity pricing line - let that handler get it
@@ -707,9 +708,6 @@ def main():
                 # Fallback to current date if parsing fails
                 purchase_date_str = datetime.now().strftime('%Y-%m-%d')
             
-            # Get savings amount (default to 0.0 if not found)
-            receipt_savings = summary.get('savings', 0.0) or 0.0
-            
             for item in items:
                 tax_status = "🟢 Taxable" if item['taxable'] else "🔵 Non-Taxable" if item['taxable'] is False else "❓ Unknown"
                 sale_status = "💰 ON SALE" if item['on_sale'] else ""
@@ -717,9 +715,14 @@ def main():
                 # If on sale, store price as $0.00 in database
                 db_price = 0.00 if item['on_sale'] else item['price']
                 
-                print(f"  • {item['item_name']:<40} ${item['price']:>6.2f}  {tax_status}  {sale_status}")
+                # Get individual item savings (promotion amount)
+                item_savings = item.get('promotion_amount', 0.0)
                 
-                # Insert into database with savings
+                print(f"  • {item['item_name']:<40} ${item['price']:>6.2f}  {tax_status}  {sale_status}")
+                if item_savings > 0:
+                    print(f"    Saved: ${item_savings:.2f}")
+                
+                # Insert into database with individual item savings
                 insert_purchase(
                     conn=imap_conn,
                     purchase_date=purchase_date_str,
@@ -728,7 +731,7 @@ def main():
                     on_sale=item['on_sale'],
                     taxable=item['taxable'],
                     email_id=email_info['id'],
-                    savings=receipt_savings
+                    savings=item_savings
                 )
             
             print("\n" + "=" * 70)

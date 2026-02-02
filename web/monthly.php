@@ -18,6 +18,7 @@
                 <a href="index.php" class="btn btn-secondary">← Back to Dashboard</a>
                 <a href="top-items.php" class="btn btn-primary">🏆 Top Items</a>
                 <a href="yearly.php" class="btn btn-primary">📆 Yearly View</a>
+                <a href="database.php" class="btn btn-secondary">🗄️ Database</a>
                 <a href="sync.php" class="btn btn-warning">🔄 Sync Receipts</a>
                 <a href="settings.php" class="btn btn-secondary">⚙️ Settings</a>
             </div>
@@ -43,6 +44,7 @@
                 ");
                 
                 $total_spent = $db->querySingle("SELECT SUM(price) FROM purchases WHERE on_sale = 0");
+                $total_savings = $db->querySingle("SELECT SUM(savings) FROM purchases");
                 $avg_monthly = $total_months > 0 ? $total_spent / $total_months : 0;
                 
                 $total_items = $db->querySingle("SELECT COUNT(*) FROM purchases");
@@ -57,6 +59,10 @@
                     <div class="summary-card">
                         <h3>Total Spent</h3>
                         <div class="value">$<?php echo number_format($total_spent, 2); ?></div>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Total Savings</h3>
+                        <div class="value" style="color: #00753e;">$<?php echo number_format($total_savings, 2); ?></div>
                     </div>
                     <div class="summary-card">
                         <h3>Average/Month</h3>
@@ -75,7 +81,7 @@
                         strftime('%Y-%m', purchase_date) as month,
                         COUNT(*) as item_count,
                         SUM(CASE WHEN on_sale = 0 THEN price ELSE 0 END) as total_spent,
-                        SUM(CASE WHEN on_sale = 1 THEN price ELSE 0 END) as total_savings,
+                        SUM(savings) as total_savings,
                         COUNT(DISTINCT item_name) as unique_items,
                         COUNT(DISTINCT purchase_date) as shopping_trips
                     FROM purchases
