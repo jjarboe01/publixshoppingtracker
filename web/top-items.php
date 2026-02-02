@@ -45,11 +45,11 @@
                 $query = "SELECT 
                             p.item_name, 
                             COUNT(*) as purchase_count, 
-                            AVG(p.price) as avg_price,
-                            MIN(p.price) as min_price,
-                            MAX(p.price) as max_price,
+                            AVG(CASE WHEN p.price >= 0 THEN p.price END) as avg_price,
+                            MIN(CASE WHEN p.price >= 0 THEN p.price END) as min_price,
+                            MAX(CASE WHEN p.price >= 0 THEN p.price END) as max_price,
                             (SELECT price FROM purchases 
-                             WHERE item_name = p.item_name 
+                             WHERE item_name = p.item_name AND price >= 0
                              ORDER BY purchase_date DESC, created_at DESC LIMIT 1) as last_price
                           FROM purchases p
                           WHERE on_sale = 0

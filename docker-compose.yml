@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # Unified container with Apache/PHP and Python
   app:
     build:
       context: .
@@ -11,7 +10,6 @@ services:
     ports:
       - "8080:80"
     volumes:
-      - ./:/app
       - publix-data:/app/data
     environment:
       - GMAIL_USER=${GMAIL_USER}
