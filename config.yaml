@@ -1,0 +1,30 @@
+name: Publix Shopping Tracker
+version: "1.0.0"
+slug: publix-shopping-tracker
+description: Track and analyze your Publix shopping receipts automatically
+url: https://github.com/jjarboe01/publixshoppingtracker
+arch:
+  - aarch64
+  - amd64
+  - armhf
+  - armv7
+  - i386
+init: false
+startup: application
+boot: auto
+ports:
+  8080/tcp: 8080
+ports_description:
+  8080/tcp: Web interface
+webui: http://[HOST]:[PORT:8080]
+options:
+  email: ""
+  email_provider: "auto"
+  app_password: ""
+  sync_hour: 5
+schema:
+  email: email
+  email_provider: list(auto|gmail|outlook|yahoo|icloud|aol|custom)
+  app_password: password
+  sync_hour: int(0,23)
+image: ghcr.io/yourusername/publix-tracker-{arch}

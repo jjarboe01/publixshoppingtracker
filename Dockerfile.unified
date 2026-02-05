@@ -1,6 +1,6 @@
 FROM php:8.2-apache
 
-# Install system dependencies
+# Install system dependencies including bashio for Home Assistant
 RUN apt-get update && \
     apt-get install -y \
     libsqlite3-dev \
@@ -9,7 +9,18 @@ RUN apt-get update && \
     python3-venv \
     gcc \
     cron \
+    wget \
+    curl \
+    jq \
     && rm -rf /var/lib/apt/lists/*
+
+# Install bashio for Home Assistant add-on integration
+RUN wget -O /tmp/bashio.tar.gz https://github.com/hassio-addons/bashio/archive/refs/tags/v0.16.2.tar.gz && \
+    mkdir -p /tmp/bashio && \
+    tar -xzf /tmp/bashio.tar.gz -C /tmp/bashio --strip-components=1 && \
+    mv /tmp/bashio/lib /usr/lib/bashio && \
+    ln -s /usr/lib/bashio/bashio /usr/bin/bashio && \
+    rm -rf /tmp/bashio.tar.gz /tmp/bashio
 
 # Install PHP extensions
 RUN docker-php-ext-install pdo pdo_sqlite
@@ -70,6 +81,21 @@ if [ -f /app/data/publix_tracker.db ]; then\n\
     chmod 664 /app/data/publix_tracker.db\n\
 fi\n\
 \n\
+# If running as Home Assistant add-on, use run.sh\n\
+if [ -f /usr/bin/bashio ]; then\n\
+    exec /run.sh\n\
+fi\n\
+\n\
+# Start cron service\n\
+service cron start\n\
+\n\
+# Start Apache in foreground\n\
+exec apache2-foreground\n\
+' > /entrypoint.sh && chmod +x /entrypoint.sh
+
+# Copy run.sh for Home Assistant add-on support
+COPY run.sh /run.sh
+RUN chmod +x /run.sh\
 # Start cron service\n\
 service cron start\n\
 \n\
