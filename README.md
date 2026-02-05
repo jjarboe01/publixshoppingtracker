@@ -17,7 +17,7 @@ A Home Assistant add-on (or standalone Docker application) that automatically re
 
 1. Add this repository to your Home Assistant add-on store:
    - Navigate to **Supervisor** → **Add-on Store** → **⋮** (menu) → **Repositories**
-   - Add: `https://github.com/yourusername/homeassistant-publix-tracker`
+   - Add: `https://github.com/jjarboe01/publixshoppingtracker`
 
 2. Install the "Publix Shopping Tracker" add-on
 
