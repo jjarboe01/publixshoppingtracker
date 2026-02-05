@@ -16,6 +16,7 @@
         <nav>
             <div class="nav-buttons">
                 <a href="index.php" class="btn btn-primary">📊 Dashboard</a>
+                <a href="trips.php" class="btn btn-primary">🛍️ Shopping Trips</a>
                 <a href="monthly.php" class="btn btn-primary">📅 Monthly View</a>
                 <a href="yearly.php" class="btn btn-primary">📆 Yearly View</a>
                 <a href="sync.php" class="btn btn-warning">🔄 Sync Receipts</a>

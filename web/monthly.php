@@ -15,8 +15,7 @@
         
         <nav>
             <div class="nav-buttons">
-                <a href="index.php" class="btn btn-secondary">← Back to Dashboard</a>
-                <a href="top-items.php" class="btn btn-primary">🏆 Top Items</a>
+                <a href="index.php" class="btn btn-secondary">← Back to Dashboard</a>                <a href="trips.php" class="btn btn-primary">🛍️ Shopping Trips</a>                <a href="top-items.php" class="btn btn-primary">🏆 Top Items</a>
                 <a href="yearly.php" class="btn btn-primary">📆 Yearly View</a>
                 <a href="sync.php" class="btn btn-warning">🔄 Sync Receipts</a>
                 <a href="settings.php" class="btn btn-secondary">⚙️ Settings</a>

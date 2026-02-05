@@ -369,3 +369,60 @@ input:focus {
 .config-value {
     color: #6c757d;
 }
+
+/* Trip styling */
+.trip-container {
+    margin-bottom: 40px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.trip-header {
+    background: #f8f9fa;
+    padding: 20px;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.trip-header h2 {
+    margin: 0 0 10px 0;
+}
+
+.trip-summary {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-size: 0.95em;
+}
+
+.trip-stat {
+    color: #666;
+}
+
+.on-sale-row {
+    background-color: #d4edda;
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75em;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.badge-success {
+    background-color: #28a745;
+    color: white;
+}
+
+.badge-info {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.btn.active {
+    background: #004d2a;
+    transform: scale(1.02);
+}

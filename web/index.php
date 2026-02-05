@@ -17,6 +17,7 @@
             <div class="nav-buttons">
                 <a href="index.php" class="btn btn-primary">📊 Dashboard</a>
                 <a href="top-items.php" class="btn btn-primary">🏆 Top Items</a>
+                <a href="trips.php" class="btn btn-primary">🛍️ Shopping Trips</a>
                 <a href="monthly.php" class="btn btn-primary">📅 Monthly View</a>
                 <a href="yearly.php" class="btn btn-primary">📆 Yearly View</a>
                 <a href="search.php" class="btn btn-secondary">🔍 Search</a>
