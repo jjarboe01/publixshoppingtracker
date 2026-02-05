@@ -51,7 +51,7 @@ RUN sed -i 's/#LoadModule rewrite_module/LoadModule rewrite_module/' /etc/apache
     mkdir -p /var/log/apache2 /run/apache2
 
 # Setup cron
-RUN echo "0 5 * * * cd /app && python3 GetReciepts.py >> /app/data/cron.log 2>&1" > /etc/crontabs/root
+RUN echo "0 5 * * * cd /app && python3 GetReciepts.py >> /share/publix-tracker/cron.log 2>&1" > /etc/crontabs/root
 
 WORKDIR /var/www/localhost/htdocs
 

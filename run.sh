@@ -7,9 +7,13 @@
 
 bashio::log.info "Starting Publix Shopping Tracker..."
 
-# Create data directory
-mkdir -p /app/data
-chmod 775 /app/data
+# Create persistent data directory in /share
+mkdir -p /share/publix-tracker/receipts
+chown -R apache:apache /share/publix-tracker
+chmod -R 775 /share/publix-tracker
+
+# Create symlink for backward compatibility
+ln -sf /share/publix-tracker /app/data
 
 # Get configuration from Home Assistant
 EMAIL=$(bashio::config 'email')
@@ -20,7 +24,7 @@ SYNC_HOUR=$(bashio::config 'sync_hour')
 # Create config.php if credentials are provided
 if [ -n "$EMAIL" ] && [ -n "$APP_PASSWORD" ]; then
     bashio::log.info "Creating configuration file..."
-    cat > /app/data/config.php << EOF
+    cat > /share/publix-tracker/config.php << EOF
 <?php
 // Email Configuration
 // Generated: $(date '+%Y-%m-%d %H:%M:%S')
@@ -29,7 +33,7 @@ define('GMAIL_EMAIL', '${EMAIL}');
 define('GMAIL_PASSWORD', '${APP_PASSWORD}');
 define('EMAIL_PROVIDER', '${EMAIL_PROVIDER}');
 EOF
-    chmod 644 /app/data/config.php
+    chmod 644 /share/publix-tracker/config.php
     bashio::log.info "Configuration saved successfully"
 else
     bashio::log.warning "No email credentials configured. Please set up via the web interface."
@@ -37,7 +41,7 @@ fi
 
 # Update cron schedule
 bashio::log.info "Setting up daily sync at ${SYNC_HOUR}:00..."
-echo "0 ${SYNC_HOUR} * * * cd /app && python3 GetReciepts.py >> /app/data/cron.log 2>&1" > /etc/crontabs/root
+echo "0 ${SYNC_HOUR} * * * cd /app && python3 GetReciepts.py >> /share/publix-tracker/cron.log 2>&1" > /etc/crontabs/root
 chmod 0644 /etc/crontabs/root
 
 # Start cron

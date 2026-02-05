@@ -343,7 +343,7 @@ def get_email_body(msg):
         return body
 
 
-def save_attachments(msg, email_id, output_dir="/app/data/receipts"):
+def save_attachments(msg, email_id, output_dir="/share/publix-tracker/receipts"):
     """
     Save any attachments from the email.
     
@@ -730,7 +730,8 @@ def load_credentials():
     # Try to load from web config file (shared data volume)
     # Check multiple possible locations
     config_paths = [
-        '/app/data/config.php',  # Docker volume mount
+        '/share/publix-tracker/config.php',  # Home Assistant persistent storage
+        '/app/data/config.php',  # Symlink for backward compatibility
         os.path.join(os.path.dirname(__file__), 'data', 'config.php'),  # Local data dir
         os.path.join(os.path.dirname(__file__), 'web', 'data', 'config.php')  # Web data dir
     ]
@@ -765,8 +766,8 @@ def main():
     """
     print("=== Publix Receipt Retriever ===\n")
     
-    # Initialize database - use data directory path
-    db_path = "/app/data/publix_tracker.db"
+    # Initialize database - use persistent storage path
+    db_path = "/share/publix-tracker/publix_tracker.db"
     db_conn = init_database(db_path)
     
     # Get Gmail credentials
