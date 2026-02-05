@@ -10,7 +10,7 @@
     <div class="container">
         <header>
             <h1>⚙️ Settings</h1>
-            <p>Manage your Gmail account configuration</p>
+            <p>Manage your email account configuration</p>
         </header>
         
         <nav>
@@ -37,13 +37,18 @@
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $email = $_POST['email'] ?? '';
                 $password = $_POST['password'] ?? '';
+                $provider = $_POST['provider'] ?? 'auto';
                 
                 // Load existing config if password is blank (to keep existing password)
                 $existing_password = '';
+                $existing_provider = 'auto';
                 if (file_exists($config_file)) {
                     include $config_file;
                     if (defined('GMAIL_PASSWORD')) {
                         $existing_password = GMAIL_PASSWORD;
+                    }
+                    if (defined('EMAIL_PROVIDER')) {
+                        $existing_provider = EMAIL_PROVIDER;
                     }
                 }
                 
@@ -54,14 +59,15 @@
                 
                 if ($email && $password) {
                     $config_content = "<?php\n";
-                    $config_content .= "// Gmail Configuration\n";
+                    $config_content .= "// Email Configuration\n";
                     $config_content .= "// Generated: " . date('Y-m-d H:i:s') . "\n\n";
                     $config_content .= "define('GMAIL_EMAIL', '" . addslashes($email) . "');\n";
                     $config_content .= "define('GMAIL_PASSWORD', '" . addslashes($password) . "');\n";
+                    $config_content .= "define('EMAIL_PROVIDER', '" . addslashes($provider) . "');\n";
                     
                     if (file_put_contents($config_file, $config_content)) {
                         echo '<div class="alert alert-success">';
-                        echo '<strong>✓ Success!</strong> Your Gmail credentials have been saved securely.';
+                        echo '<strong>✓ Success!</strong> Your email credentials have been saved securely.';
                         echo '</div>';
                     } else {
                         echo '<div class="alert alert-danger">';
@@ -77,11 +83,13 @@
             
             // Load existing config
             $current_email = '';
+            $current_provider = 'auto';
             $config_exists = false;
             
             if (file_exists($config_file)) {
                 include $config_file;
                 $current_email = defined('GMAIL_EMAIL') ? GMAIL_EMAIL : '';
+                $current_provider = defined('EMAIL_PROVIDER') ? EMAIL_PROVIDER : 'auto';
                 $config_exists = defined('GMAIL_EMAIL') && defined('GMAIL_PASSWORD');
             }
             
@@ -108,8 +116,8 @@
             <div class="alert alert-warning">
                 <h3>⚠️ Important Security Information</h3>
                 <ul style="margin-left: 20px; margin-top: 10px;">
-                    <li>Use a Gmail <strong>App Password</strong>, not your regular password</li>
-                    <li>Create an App Password at: <a href="https://myaccount.google.com/apppasswords" target="_blank">https://myaccount.google.com/apppasswords</a></li>
+                    <li>Use an <strong>App Password</strong>, not your regular password</li>
+                    <li>See instructions below for your specific email provider</li>
                     <li>Your credentials are stored in a PHP file on the server</li>
                     <li>Make sure the data directory is not publicly accessible</li>
                 </ul>
@@ -117,24 +125,38 @@
             
             <form method="POST">
                 <div class="form-group">
-                    <label for="email">Gmail Address</label>
+                    <label for="email">Email Address</label>
                     <input type="email" id="email" name="email" 
                            value="<?php echo htmlspecialchars($current_email); ?>" 
                            required 
-                           placeholder="your-email@gmail.com">
-                    <div class="help-text">The Gmail account that receives Publix receipts</div>
+                           placeholder="your-email@example.com">
+                    <div class="help-text">The email account that receives Publix receipts</div>
                 </div>
                 
                 <div class="form-group">
-                    <label for="password">Gmail App Password</label>
+                    <label for="provider">Email Provider</label>
+                    <select id="provider" name="provider" required>
+                        <option value="auto" <?php echo $current_provider === 'auto' ? 'selected' : ''; ?>>Auto-detect from email domain</option>
+                        <option value="gmail" <?php echo $current_provider === 'gmail' ? 'selected' : ''; ?>>Gmail</option>
+                        <option value="outlook" <?php echo $current_provider === 'outlook' ? 'selected' : ''; ?>>Outlook / Hotmail / Live</option>
+                        <option value="yahoo" <?php echo $current_provider === 'yahoo' ? 'selected' : ''; ?>>Yahoo Mail</option>
+                        <option value="icloud" <?php echo $current_provider === 'icloud' ? 'selected' : ''; ?>>iCloud Mail</option>
+                        <option value="aol" <?php echo $current_provider === 'aol' ? 'selected' : ''; ?>>AOL Mail</option>
+                        <option value="custom" <?php echo $current_provider === 'custom' ? 'selected' : ''; ?>>Custom IMAP Server</option>
+                    </select>
+                    <div class="help-text">Select your email provider (auto-detect recommended)</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">App Password</label>
                     <input type="password" id="password" name="password" 
                            <?php echo !$config_exists ? 'required' : ''; ?>
-                           placeholder="<?php echo $config_exists ? 'Leave blank to keep current password' : 'Enter your 16-character app password'; ?>">
+                           placeholder="<?php echo $config_exists ? 'Leave blank to keep current password' : 'Enter your app password'; ?>">
                     <div class="help-text">
                         <?php if ($config_exists): ?>
                             Leave blank to keep current password, or enter new password to update
                         <?php else: ?>
-                            16-character password from Google App Passwords
+                            App-specific password from your email provider
                         <?php endif; ?>
                     </div>
                 </div>
@@ -145,14 +167,46 @@
             </form>
             
             <div class="info-box">
-                <h3>📝 How to get a Gmail App Password:</h3>
+                <h3>📝 How to get an App Password:</h3>
+                
+                <h4 style="margin-top: 15px; color: #007bff;">📧 Gmail:</h4>
                 <ol style="margin-left: 20px; line-height: 1.8;">
-                    <li>Go to your Google Account: <a href="https://myaccount.google.com" target="_blank">myaccount.google.com</a></li>
-                    <li>Click on "Security" in the left menu</li>
-                    <li>Under "How you sign in to Google," select "2-Step Verification" (you must enable this first)</li>
-                    <li>At the bottom, click "App passwords"</li>
+                    <li>Go to <a href="https://myaccount.google.com/apppasswords" target="_blank">Google App Passwords</a></li>
+                    <li>You must have 2-Step Verification enabled first</li>
                     <li>Select "Mail" and your device</li>
-                    <li>Copy the 16-character password and paste it above</li>
+                    <li>Copy the 16-character password</li>
+                </ol>
+                
+                <h4 style="margin-top: 15px; color: #0078d4;">📧 Outlook / Hotmail / Live:</h4>
+                <ol style="margin-left: 20px; line-height: 1.8;">
+                    <li>Go to <a href="https://account.microsoft.com/security" target="_blank">Microsoft Security Settings</a></li>
+                    <li>Enable "Two-step verification"</li>
+                    <li>Under "App passwords", create a new password</li>
+                    <li>Copy the generated password</li>
+                </ol>
+                
+                <h4 style="margin-top: 15px; color: #6001d2;">📧 Yahoo Mail:</h4>
+                <ol style="margin-left: 20px; line-height: 1.8;">
+                    <li>Go to <a href="https://login.yahoo.com/account/security" target="_blank">Yahoo Account Security</a></li>
+                    <li>Click "Generate app password"</li>
+                    <li>Select "Other app" and enter a name</li>
+                    <li>Copy the generated password</li>
+                </ol>
+                
+                <h4 style="margin-top: 15px; color: #000;">📧 iCloud Mail:</h4>
+                <ol style="margin-left: 20px; line-height: 1.8;">
+                    <li>Go to <a href="https://appleid.apple.com/" target="_blank">Apple ID Settings</a></li>
+                    <li>Sign in and go to Security section</li>
+                    <li>Under "App-Specific Passwords", click "Generate Password"</li>
+                    <li>Enter a label and copy the password</li>
+                </ol>
+                
+                <h4 style="margin-top: 15px; color: #ff0000;">📧 AOL Mail:</h4>
+                <ol style="margin-left: 20px; line-height: 1.8;">
+                    <li>Go to <a href="https://login.aol.com/account/security" target="_blank">AOL Account Security</a></li>
+                    <li>Click "Generate app password"</li>
+                    <li>Select "Other app" and enter a name</li>
+                    <li>Copy the generated password</li>
                 </ol>
             </div>
             

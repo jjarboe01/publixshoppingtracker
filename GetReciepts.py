@@ -9,25 +9,78 @@ import sqlite3
 from datetime import datetime
 
 
-def connect_to_gmail(email_address, password):
+def get_imap_server(email_address, provider=None):
     """
-    Connect to Gmail using IMAP.
+    Get IMAP server configuration for email provider.
     
     Args:
-        email_address: Your Gmail address
-        password: Your Gmail app-specific password
+        email_address: Email address
+        provider: Optional provider override
+        
+    Returns:
+        Tuple of (server, port)
+    """
+    # Provider-specific IMAP servers
+    imap_servers = {
+        'gmail': ('imap.gmail.com', 993),
+        'outlook': ('outlook.office365.com', 993),
+        'hotmail': ('outlook.office365.com', 993),
+        'yahoo': ('imap.mail.yahoo.com', 993),
+        'icloud': ('imap.mail.me.com', 993),
+        'aol': ('imap.aol.com', 993),
+    }
+    
+    # If provider specified, use it
+    if provider and provider.lower() in imap_servers:
+        return imap_servers[provider.lower()]
+    
+    # Auto-detect from email domain
+    domain = email_address.split('@')[-1].lower()
+    
+    if 'gmail.com' in domain:
+        return imap_servers['gmail']
+    elif 'outlook.com' in domain or 'hotmail.com' in domain or 'live.com' in domain:
+        return imap_servers['outlook']
+    elif 'yahoo.com' in domain:
+        return imap_servers['yahoo']
+    elif 'icloud.com' in domain or 'me.com' in domain:
+        return imap_servers['icloud']
+    elif 'aol.com' in domain:
+        return imap_servers['aol']
+    else:
+        # Default to standard IMAP SSL port
+        return (f'imap.{domain}', 993)
+
+def connect_to_gmail(email_address, password, provider=None):
+    """
+    Connect to email provider using IMAP.
+    
+    Args:
+        email_address: Your email address
+        password: Your email app-specific password
+        provider: Optional email provider (gmail, outlook, yahoo, icloud, aol)
         
     Returns:
         IMAP connection object
     """
     try:
-        # Connect to Gmail's IMAP server
-        imap = imaplib.IMAP4_SSL("imap.gmail.com")
+        # Get IMAP server configuration
+        server, port = get_imap_server(email_address, provider)
+        print(f"Connecting to {server}:{port}...")
+        
+        # Connect to IMAP server
+        imap = imaplib.IMAP4_SSL(server, port)
         imap.login(email_address, password)
         print(f"Successfully connected to {email_address}")
         return imap
     except Exception as e:
         print(f"Failed to connect: {e}")
+        print(f"\nTroubleshooting tips:")
+        print(f"  - Make sure you're using an app-specific password (not your regular password)")
+        print(f"  - For Gmail: https://myaccount.google.com/apppasswords")
+        print(f"  - For Outlook/Hotmail: https://account.microsoft.com/security")
+        print(f"  - For Yahoo: https://login.yahoo.com/account/security")
+        print(f"  - For iCloud: https://appleid.apple.com/account/manage")
         return None
 
 
@@ -618,7 +671,7 @@ def parse_receipt_summary(email_body):
 
 def load_credentials():
     """
-    Load Gmail credentials from web config file or prompt user.
+    Load email credentials from web config file or prompt user.
     Priority:
     1. Web config file (data/config.php) - Set via Settings page
     2. Command-line prompt - Manual entry
@@ -636,21 +689,23 @@ def load_credentials():
             try:
                 with open(web_config_file, 'r') as f:
                     content = f.read()
-                    # Extract email and password from PHP defines
+                    # Extract email, password, and provider from PHP defines
                     email_match = re.search(r"define\('GMAIL_EMAIL',\s*'([^']+)'\)", content)
                     password_match = re.search(r"define\('GMAIL_PASSWORD',\s*'([^']+)'\)", content)
+                    provider_match = re.search(r"define\('EMAIL_PROVIDER',\s*'([^']+)'\)", content)
                     if email_match and password_match:
+                        provider = provider_match.group(1) if provider_match else None
                         print(f"✓ Loaded credentials from {web_config_file}")
-                        return email_match.group(1), password_match.group(1)
+                        return email_match.group(1), password_match.group(1), provider
             except Exception as e:
                 print(f"Warning: Could not read config from {web_config_file}: {e}")
     
     # Prompt user for credentials
     print("No saved credentials found. Please configure credentials in the web Settings page,")
     print("or enter them manually below.\n")
-    email_address = input("Enter your Gmail address: ")
-    password = getpass("Enter your Gmail app password: ")
-    return email_address, password
+    email_address = input("Enter your email address: ")
+    password = getpass("Enter your email app password: ")
+    return email_address, password, None
 
 
 def main():
@@ -666,11 +721,11 @@ def main():
     # Get Gmail credentials
     # Note: For Gmail, you need to use an App Password, not your regular password
     # Create one at: https://myaccount.google.com/apppasswords
-    email_address, password = load_credentials()
+    email_address, password, provider = load_credentials()
     print(f"Using email: {email_address}\n")
     
-    # Connect to Gmail
-    imap = connect_to_gmail(email_address, password)
+    # Connect to email provider
+    imap = connect_to_gmail(email_address, password, provider)
     
     if not imap:
         print("Failed to connect to Gmail")
