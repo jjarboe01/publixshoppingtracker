@@ -50,5 +50,9 @@ chmod -R 775 /app/data
 
 bashio::log.info "Starting Apache web server..."
 
-# Start Apache in foreground
-exec httpd -D FOREGROUND
+# Make sure Apache can write logs
+mkdir -p /var/log/apache2
+chown apache:apache /var/log/apache2
+
+# Start Apache in foreground with proper settings
+exec httpd -DFOREGROUND -e info
