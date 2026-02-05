@@ -37,20 +37,52 @@
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Handle database purge
                 if (isset($_POST['purge_database'])) {
+                    $errors = [];
+                    $success = [];
+                    
+                    // Delete database file
                     $db_file = './data/publix_tracker.db';
                     if (file_exists($db_file)) {
                         if (unlink($db_file)) {
-                            echo '<div class="alert alert-success">';
-                            echo '<strong>✓ Success!</strong> Database has been purged. All shopping data has been deleted.';
-                            echo '</div>';
+                            $success[] = 'Database deleted';
                         } else {
-                            echo '<div class="alert alert-danger">';
-                            echo '<strong>✗ Error!</strong> Could not delete database file. Check permissions.';
-                            echo '</div>';
+                            $errors[] = 'Could not delete database file';
                         }
-                    } else {
+                    }
+                    
+                    // Delete all receipt images
+                    $receipts_dir = './data/receipts';
+                    if (is_dir($receipts_dir)) {
+                        $files = glob($receipts_dir . '/*');
+                        $deleted_count = 0;
+                        foreach ($files as $file) {
+                            if (is_file($file)) {
+                                if (unlink($file)) {
+                                    $deleted_count++;
+                                } else {
+                                    $errors[] = 'Could not delete: ' . basename($file);
+                                }
+                            }
+                        }
+                        if ($deleted_count > 0) {
+                            $success[] = "$deleted_count receipt image(s) deleted";
+                        }
+                    }
+                    
+                    // Display results
+                    if (!empty($success)) {
+                        echo '<div class="alert alert-success">';
+                        echo '<strong>✓ Success!</strong> ' . implode(', ', $success) . '.';
+                        echo '</div>';
+                    }
+                    if (!empty($errors)) {
+                        echo '<div class="alert alert-danger">';
+                        echo '<strong>✗ Error!</strong> ' . implode(', ', $errors) . '.';
+                        echo '</div>';
+                    }
+                    if (empty($success) && empty($errors)) {
                         echo '<div class="alert alert-info">';
-                        echo '<strong>ℹ Info:</strong> Database file does not exist or has already been deleted.';
+                        echo '<strong>ℹ Info:</strong> No data found to purge.';
                         echo '</div>';
                     }
                 } else {
@@ -241,12 +273,12 @@
             <div style="margin-top: 30px; padding-top: 30px; border-top: 2px solid #dc3545;">
                 <div class="alert alert-danger">
                     <h3>⚠️ Danger Zone</h3>
-                    <p><strong>Purge Database:</strong> This will permanently delete ALL shopping data, receipts, and history. This action cannot be undone!</p>
+                    <p><strong>Purge Database:</strong> This will permanently delete ALL shopping data, receipt images, and history. This action cannot be undone!</p>
                 </div>
-                <form method="POST" onsubmit="return confirm('⚠️ WARNING: This will permanently delete ALL your shopping data!\n\nThis includes:\n• All receipts\n• All items\n• All savings history\n• All shopping trips\n\nThis action CANNOT be undone!\n\nAre you absolutely sure you want to continue?');" style="margin-top: 20px;">
+                <form method="POST" onsubmit="return confirm('⚠️ WARNING: This will permanently delete ALL your shopping data!\n\nThis includes:\n• All receipt images\n• All database records\n• All items\n• All savings history\n• All shopping trips\n\nThis action CANNOT be undone!\n\nAre you absolutely sure you want to continue?');" style="margin-top: 20px;">
                     <input type="hidden" name="purge_database" value="1">
                     <button type="submit" class="btn" style="width: 100%; padding: 15px; font-size: 18px; background-color: #dc3545; color: white; border: none;">
-                        🗑️ Purge Database
+                        🗑️ Purge Database & Receipts
                     </button>
                 </form>
             </div>
