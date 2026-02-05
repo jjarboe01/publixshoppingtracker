@@ -1,26 +1,61 @@
-# Use official Python image as base
-FROM python:3.11-slim
+ARG BUILD_FROM
+FROM $BUILD_FROM
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
+# Set shell
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# Set working directory
-WORKDIR /app
+# Install Apache, PHP, Python, and dependencies
+RUN apk add --no-cache \
+    apache2 \
+    apache2-ssl \
+    php82 \
+    php82-apache2 \
+    php82-pdo \
+    php82-pdo_sqlite \
+    php82-sqlite3 \
+    php82-session \
+    python3 \
+    py3-pip \
+    sqlite \
+    dcron \
+    bash
 
-# Copy Python files
-COPY GetReciepts.py ViewDatabase.py ./
-COPY requirements.txt* ./
-
-# Install Python dependencies
-RUN pip install --no-cache-dir imaplib2 || pip install --no-cache-dir email || true
+# Install Python packages
+RUN pip3 install --break-system-packages --no-cache-dir imaplib2
 
 # Create directories
-RUN mkdir -p /app/receipts /app/data
+RUN mkdir -p /app /app/data /run/apache2 /var/www/localhost/htdocs
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1
+# Copy application files
+COPY GetReciepts.py ViewDatabase.py /app/
+COPY web/ /var/www/localhost/htdocs/
+COPY run.sh /
 
-# Default command
-CMD ["python3", "GetReciepts.py"]
+# Create symlink for data directory
+RUN rm -rf /var/www/localhost/htdocs/data && \
+    ln -s /app/data /var/www/localhost/htdocs/data
+
+# Set permissions
+RUN chown -R apache:apache /var/www/localhost/htdocs /app/data && \
+    chmod -R 755 /var/www/localhost/htdocs && \
+    chmod -R 775 /app/data && \
+    chmod +x /run.sh
+
+# Configure Apache
+RUN sed -i 's/#LoadModule rewrite_module/LoadModule rewrite_module/' /etc/apache2/httpd.conf && \
+    sed -i 's/AllowOverride None/AllowOverride All/' /etc/apache2/httpd.conf && \
+    sed -i 's/ServerTokens OS/ServerTokens Prod/' /etc/apache2/httpd.conf && \
+    sed -i 's/ServerSignature On/ServerSignature Off/' /etc/apache2/httpd.conf && \
+    echo "DirectoryIndex index.php index.html" >> /etc/apache2/httpd.conf
+
+# Setup cron
+RUN echo "0 5 * * * cd /app && python3 GetReciepts.py >> /app/data/cron.log 2>&1" > /etc/crontabs/root
+
+WORKDIR /var/www/localhost/htdocs
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:80/ || exit 1
+
+# Run
+CMD ["/run.sh"]

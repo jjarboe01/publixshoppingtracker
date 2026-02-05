@@ -7,7 +7,7 @@ build_from:
 labels:
   org.opencontainers.image.title: "Publix Shopping Tracker"
   org.opencontainers.image.description: "Track and analyze your Publix shopping receipts"
-  org.opencontainers.image.source: "https://github.com/yourusername/publix-tracker"
+  org.opencontainers.image.source: "https://github.com/jjarboe01/publixshoppingtracker"
   org.opencontainers.image.licenses: "MIT"
 args:
   TEMPIO_VERSION: "2021.09.0"

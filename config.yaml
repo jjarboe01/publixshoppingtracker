@@ -27,4 +27,3 @@ schema:
   email_provider: list(auto|gmail|outlook|yahoo|icloud|aol|custom)
   app_password: password
   sync_hour: int(0,23)
-image: ghcr.io/yourusername/publix-tracker-{arch}

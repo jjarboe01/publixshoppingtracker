@@ -37,19 +37,18 @@ fi
 
 # Update cron schedule
 bashio::log.info "Setting up daily sync at ${SYNC_HOUR}:00..."
-echo "${SYNC_HOUR} 5 * * * cd /app && python3 GetReciepts.py >> /app/data/cron.log 2>&1" > /etc/cron.d/publix-sync
-chmod 0644 /etc/cron.d/publix-sync
-crontab /etc/cron.d/publix-sync
+echo "0 ${SYNC_HOUR} * * * cd /app && python3 GetReciepts.py >> /app/data/cron.log 2>&1" > /etc/crontabs/root
+chmod 0644 /etc/crontabs/root
 
 # Start cron
 bashio::log.info "Starting cron service..."
-service cron start
+crond -b
 
 # Set permissions
-chown -R www-data:www-data /app/data
+chown -R apache:apache /app/data
 chmod -R 775 /app/data
 
 bashio::log.info "Starting Apache web server..."
 
 # Start Apache in foreground
-exec apache2-foreground
+exec httpd -D FOREGROUND
