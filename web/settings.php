@@ -35,49 +35,70 @@
             
             // Handle form submission
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                $email = $_POST['email'] ?? '';
-                $password = $_POST['password'] ?? '';
-                $provider = $_POST['provider'] ?? 'auto';
-                
-                // Load existing config if password is blank (to keep existing password)
-                $existing_password = '';
-                $existing_provider = 'auto';
-                if (file_exists($config_file)) {
-                    include $config_file;
-                    if (defined('GMAIL_PASSWORD')) {
-                        $existing_password = GMAIL_PASSWORD;
-                    }
-                    if (defined('EMAIL_PROVIDER')) {
-                        $existing_provider = EMAIL_PROVIDER;
-                    }
-                }
-                
-                // Use existing password if new one not provided
-                if (empty($password) && !empty($existing_password)) {
-                    $password = $existing_password;
-                }
-                
-                if ($email && $password) {
-                    $config_content = "<?php\n";
-                    $config_content .= "// Email Configuration\n";
-                    $config_content .= "// Generated: " . date('Y-m-d H:i:s') . "\n\n";
-                    $config_content .= "define('GMAIL_EMAIL', '" . addslashes($email) . "');\n";
-                    $config_content .= "define('GMAIL_PASSWORD', '" . addslashes($password) . "');\n";
-                    $config_content .= "define('EMAIL_PROVIDER', '" . addslashes($provider) . "');\n";
-                    
-                    if (file_put_contents($config_file, $config_content)) {
-                        echo '<div class="alert alert-success">';
-                        echo '<strong>✓ Success!</strong> Your email credentials have been saved securely.';
-                        echo '</div>';
+                // Handle database purge
+                if (isset($_POST['purge_database'])) {
+                    $db_file = './data/publix_tracker.db';
+                    if (file_exists($db_file)) {
+                        if (unlink($db_file)) {
+                            echo '<div class="alert alert-success">';
+                            echo '<strong>✓ Success!</strong> Database has been purged. All shopping data has been deleted.';
+                            echo '</div>';
+                        } else {
+                            echo '<div class="alert alert-danger">';
+                            echo '<strong>✗ Error!</strong> Could not delete database file. Check permissions.';
+                            echo '</div>';
+                        }
                     } else {
-                        echo '<div class="alert alert-danger">';
-                        echo '<strong>✗ Error!</strong> Could not save configuration file. Check directory permissions.';
+                        echo '<div class="alert alert-info">';
+                        echo '<strong>ℹ Info:</strong> Database file does not exist or has already been deleted.';
                         echo '</div>';
                     }
                 } else {
-                    echo '<div class="alert alert-danger">';
-                    echo '<strong>✗ Error!</strong> Email is required. Password is required for new configurations.';
-                    echo '</div>';
+                    // Handle email configuration update
+                    $email = $_POST['email'] ?? '';
+                    $password = $_POST['password'] ?? '';
+                    $provider = $_POST['provider'] ?? 'auto';
+                    
+                    // Load existing config if password is blank (to keep existing password)
+                    $existing_password = '';
+                    $existing_provider = 'auto';
+                    if (file_exists($config_file)) {
+                        include $config_file;
+                        if (defined('GMAIL_PASSWORD')) {
+                            $existing_password = GMAIL_PASSWORD;
+                        }
+                        if (defined('EMAIL_PROVIDER')) {
+                            $existing_provider = EMAIL_PROVIDER;
+                        }
+                    }
+                    
+                    // Use existing password if new one not provided
+                    if (empty($password) && !empty($existing_password)) {
+                        $password = $existing_password;
+                    }
+                    
+                    if ($email && $password) {
+                        $config_content = "<?php\n";
+                        $config_content .= "// Email Configuration\n";
+                        $config_content .= "// Generated: " . date('Y-m-d H:i:s') . "\n\n";
+                        $config_content .= "define('GMAIL_EMAIL', '" . addslashes($email) . "');\n";
+                        $config_content .= "define('GMAIL_PASSWORD', '" . addslashes($password) . "');\n";
+                        $config_content .= "define('EMAIL_PROVIDER', '" . addslashes($provider) . "');\n";
+                        
+                        if (file_put_contents($config_file, $config_content)) {
+                            echo '<div class="alert alert-success">';
+                            echo '<strong>✓ Success!</strong> Your email credentials have been saved securely.';
+                            echo '</div>';
+                        } else {
+                            echo '<div class="alert alert-danger">';
+                            echo '<strong>✗ Error!</strong> Could not save configuration file. Check directory permissions.';
+                            echo '</div>';
+                        }
+                    } else {
+                        echo '<div class="alert alert-danger">';
+                        echo '<strong>✗ Error!</strong> Email is required. Password is required for new configurations.';
+                        echo '</div>';
+                    }
                 }
             }
             
@@ -215,6 +236,19 @@
                 <a href="sync.php" class="btn btn-primary" style="width: 100%; padding: 15px; font-size: 18px; text-align: center;">
                     🔄 Sync Receipts Now
                 </a>
+            </div>
+            
+            <div style="margin-top: 30px; padding-top: 30px; border-top: 2px solid #dc3545;">
+                <div class="alert alert-danger">
+                    <h3>⚠️ Danger Zone</h3>
+                    <p><strong>Purge Database:</strong> This will permanently delete ALL shopping data, receipts, and history. This action cannot be undone!</p>
+                </div>
+                <form method="POST" onsubmit="return confirm('⚠️ WARNING: This will permanently delete ALL your shopping data!\n\nThis includes:\n• All receipts\n• All items\n• All savings history\n• All shopping trips\n\nThis action CANNOT be undone!\n\nAre you absolutely sure you want to continue?');" style="margin-top: 20px;">
+                    <input type="hidden" name="purge_database" value="1">
+                    <button type="submit" class="btn" style="width: 100%; padding: 15px; font-size: 18px; background-color: #dc3545; color: white; border: none;">
+                        🗑️ Purge Database
+                    </button>
+                </form>
             </div>
             <?php endif; ?>
         </div>
