@@ -7,7 +7,7 @@
    - Navigate to **Supervisor** → **Add-on Store**
    - Click the **⋮** (menu) button in the top right
    - Select **Repositories**
-   - Add this URL: `https://github.com/yourusername/homeassistant-publix-tracker`
+   - Add this URL: `https://github.com/jjarboe01/publixshoppingtracker`
    - Click **Add**
 
 2. **Install the Add-on**
