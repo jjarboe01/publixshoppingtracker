@@ -28,6 +28,13 @@ EMAIL_PROVIDER=$(bashio::config 'email_provider')
 APP_PASSWORD=$(bashio::config 'app_password')
 SYNC_HOUR=$(bashio::config 'sync_hour')
 
+# Debug: Log configuration values (without password)
+bashio::log.info "Configuration loaded:"
+bashio::log.info "  Email: ${EMAIL:-<not set>}"
+bashio::log.info "  Provider: ${EMAIL_PROVIDER:-<not set>}"
+bashio::log.info "  Password: ${APP_PASSWORD:+<set>}${APP_PASSWORD:-<not set>}"
+bashio::log.info "  Sync Hour: ${SYNC_HOUR:-<not set>}"
+
 # Create config.php if credentials are provided
 if [ -n "$EMAIL" ] && [ -n "$APP_PASSWORD" ]; then
     bashio::log.info "Creating configuration file..."
