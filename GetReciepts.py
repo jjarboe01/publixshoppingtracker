@@ -502,7 +502,8 @@ def parse_receipt_items(email_body):
         
         # Skip lines that are clearly not items
         if any(skip in line for skip in ['Receipt ID:', 'Customer ID', 'Your cashier', 
-                                          'Savings Summary', 'Reference #', 'Trace #']):
+                                          'Savings Summary', 'Reference #', 'Trace #',
+                                          'Sales Tax', 'sales tax', 'SALES TAX']):
             continue
         
         # Check if next line is a quantity pricing line
