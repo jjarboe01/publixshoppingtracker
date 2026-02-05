@@ -343,7 +343,7 @@ def get_email_body(msg):
         return body
 
 
-def save_attachments(msg, email_id, output_dir="receipts"):
+def save_attachments(msg, email_id, output_dir="/app/data/receipts"):
     """
     Save any attachments from the email.
     
@@ -353,7 +353,7 @@ def save_attachments(msg, email_id, output_dir="receipts"):
         output_dir: Directory to save attachments
     """
     if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
+        os.makedirs(output_dir, mode=0o775, exist_ok=True)
     
     for part in msg.walk():
         if part.get_content_disposition() == "attachment":

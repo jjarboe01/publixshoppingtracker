@@ -24,7 +24,7 @@ RUN apk add --no-cache \
 RUN pip3 install --break-system-packages --no-cache-dir imaplib2
 
 # Create directories
-RUN mkdir -p /app /app/data /run/apache2 /var/www/localhost/htdocs
+RUN mkdir -p /app /app/data /app/data/receipts /run/apache2 /var/www/localhost/htdocs
 
 # Copy application files
 COPY GetReciepts.py ViewDatabase.py /app/
