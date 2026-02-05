@@ -512,11 +512,50 @@ def parse_receipt_items(email_body):
             if re.match(r'^\s+\d+\s+@', next_line):
                 is_qty_line_next = True
         
-        # Match item lines: "  ITEM NAME              PRICE   TAX"
-        # Format: Item name (left-padded with 2 spaces), price (right-aligned), tax indicator
-        # Example: "  CALIFIA UNSWT VAN             4.89   F"
+        # Check for "You saved:" lines first (with $ sign in price)
+        # Format: " You saved: $8.79" or "  You Saved: $5.00"
+        savings_match = re.match(r'^\s+You [Ss]aved:\s+\$(-?\d+\.\d{2})', line, re.IGNORECASE)
+        if savings_match:
+            savings_amount = float(savings_match.group(1))
+            if current_items:
+                # If the previous item has price 0.00, it's likely a BOGO free item
+                # Apply savings to the item before it (the one that was charged)
+                if len(current_items) >= 2 and current_items[-1]['price'] == 0.00:
+                    # Mark both items as on sale (BOGO)
+                    current_items[-2]['on_sale'] = True
+                    current_items[-1]['on_sale'] = True
+                    # Split the savings between both items
+                    savings_per_item = abs(savings_amount) / 2
+                    current_items[-2]['promotion_amount'] += savings_per_item
+                    current_items[-1]['promotion_amount'] += savings_per_item
+                else:
+                    # Normal promotion on single item
+                    current_items[-1]['on_sale'] = True
+                    current_items[-1]['promotion_amount'] += abs(savings_amount)
+            continue
+        
+        # Match item lines: Two possible formats:
+        # Format 1: "  ITEM NAME              PRICE   TAX"  (2+ spaces prefix, price then tax)
+        # Format 2: "ITEM NAME   TAX         PRICE"  (no prefix, tax then price)
+        # Example 1: "  CALIFIA UNSWT VAN             4.89   F"
+        # Example 2: "Newmans Pizza Four Chee F          8.79"
         # Also match negative prices for promotions: "  Promotion            -1.50   F"
+        
+        # Try Format 1 first (with leading spaces, price before tax)
         item_match = re.match(r'^\s{2,}(.+?)\s+(-?\d+\.\d{2})\s+([TF](?:\s+[TF])?)\s*$', line)
+        
+        # If no match, try Format 2 (no leading spaces, tax before price)
+        if not item_match:
+            item_match = re.match(r'^(.+?)\s+([TF](?:\s+[TF])?)\s+(-?\d+\.\d{2})\s*$', line)
+            if item_match:
+                # Reorder groups to match format 1: (name, price, tax)
+                item_name = item_match.group(1).strip()
+                tax_indicator = item_match.group(2).strip()
+                price = float(item_match.group(3))
+                # Reconstruct match with standard order
+                item_match = type('obj', (object,), {
+                    'group': lambda self, n: [None, item_name, str(price), tax_indicator][n]
+                })()
         
         if item_match:
             item_name = item_match.group(1).strip()
@@ -547,13 +586,24 @@ def parse_receipt_items(email_body):
                 continue
             
             # Handle "Promotion" and "You Saved" lines
-            if 'Promotion' in item_name or 'You Saved' in item_name:
+            if 'Promotion' in item_name or 'You Saved' in item_name or 'You saved' in item_name:
                 if current_items:
-                    # Mark the previous item as on sale
-                    current_items[-1]['on_sale'] = True
-                    # Add the promotion amount as positive (convert negative to positive)
-                    # Add to existing promotion_amount in case there are multiple promotion lines
-                    current_items[-1]['promotion_amount'] += abs(price)
+                    # If the previous item has price 0.00, it's likely a BOGO free item
+                    # Apply savings to the item before it (the one that was charged)
+                    if len(current_items) >= 2 and current_items[-1]['price'] == 0.00:
+                        # Mark both items as on sale (BOGO)
+                        current_items[-2]['on_sale'] = True
+                        current_items[-1]['on_sale'] = True
+                        # Split the savings between both items
+                        savings_per_item = abs(price) / 2
+                        current_items[-2]['promotion_amount'] += savings_per_item
+                        current_items[-1]['promotion_amount'] += savings_per_item
+                    else:
+                        # Normal promotion on single item
+                        current_items[-1]['on_sale'] = True
+                        # Add the promotion amount as positive (convert negative to positive)
+                        # Add to existing promotion_amount in case there are multiple promotion lines
+                        current_items[-1]['promotion_amount'] += abs(price)
                 continue
             
             # Skip this line if next line is a quantity pricing line - let that handler get it
