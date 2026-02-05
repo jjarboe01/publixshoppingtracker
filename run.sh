@@ -12,12 +12,12 @@ mkdir -p /share/publix-tracker/receipts
 chown -R apache:apache /share/publix-tracker
 chmod -R 775 /share/publix-tracker
 
-# Remove old symlink if it exists and create new one to persistent storage
-rm -f /app/data
+# Remove old directories if they exist and create symlinks to persistent storage
+rm -rf /app/data
 ln -sf /share/publix-tracker /app/data
 
 # Ensure the web data symlink points to the right place
-rm -f /var/www/localhost/htdocs/data
+rm -rf /var/www/localhost/htdocs/data
 ln -sf /share/publix-tracker /var/www/localhost/htdocs/data
 
 bashio::log.info "Data directory symlinks created"
